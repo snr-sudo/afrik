@@ -1,0 +1,29 @@
+name: Build Afrique.nwa
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Installer la toolchain ARM
+        run: sudo apt-get update && sudo apt-get install -y gcc-arm-none-eabi libnewlib-arm-none-eabi
+      - name: Recuperer le modele officiel NumWorks
+        run: git clone --depth 1 https://github.com/numworks/epsilon-sample-app-c template
+      - name: Remplacer main.c
+        run: |
+          cp main.c template/src/main.c
+          sed -i 's/nwlink@[0-9.]*/nwlink@0.0.19/' template/Makefile
+      - name: Compiler
+        run: make -C template clean && make -C template build
+      - name: Renommer
+        run: cp template/output/app.nwa Afrique.nwa
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Afrique-nwa
+          path: Afrique.nwa
